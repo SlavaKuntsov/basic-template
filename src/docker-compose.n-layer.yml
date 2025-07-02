@@ -1,0 +1,42 @@
+version: "3.9" 
+
+services:
+
+  service:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: service
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:7000
+      - CONNECTION_STRING=Host=postgres;Port=5432;Database=translation;Username=postgres;Password=1;
+      - Timezone=Europe/Minsk;
+    depends_on:
+      postgres:
+        condition: service_healthy
+        
+  postgres:
+    image: postgres:alpine
+    container_name: postgres
+#    mem_limit: 512m
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1
+      POSTGRES_DB: translation
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
